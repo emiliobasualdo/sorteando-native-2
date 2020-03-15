@@ -1,13 +1,15 @@
 import React, {useState} from 'react';
-import { StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import {StyleSheet, View, Text, TouchableOpacity, Alert} from 'react-native';
 import Colors from "../constants/Colors";
 import {MARGIN} from "../constants/Layout";
 import {useAuth} from "../services/use-auth";
+import consts from "../services/constants"
 
 const [PARTICIPATE, LOADING,PARTICIPATING, ERROR] = [1,2,3,4];
 const OPACITY = 0.6;
-export default function ParticipateButton({isUserParticipating, draw}) {
+export default function ParticipateButton({isUserParticipating, draw, navigation}) {
     const {user} = useAuth(); // esto viene del estado
+    
     const [buttonState, setButtonState] = useState(isUserParticipating? PARTICIPATING : PARTICIPATE);
 
     let backgroundColor, borderColor, buttonText, textColor;
@@ -44,11 +46,37 @@ export default function ParticipateButton({isUserParticipating, draw}) {
             setButtonState(PARTICIPATE);
         }, 2000);
     };
+    
+    const onSignin = () => navigation.navigate("Profile");
+    
     const onPress = () => {
+        if (!user) {
+            Alert.alert(
+              'Iniciar sesión',
+              'Para participar del sorteo tenés que iniciar sesión.\n Sino, no sabríamos a quién entregar el premio :)',
+              [
+                  {text: 'Iniciar sesion', onPress: onSignin},
+                  {text: 'Cancelar', style: 'cancel'},
+              ],
+              {cancelable: true},
+            );
+            return;
+        }
+        if(buttonState !== PARTICIPATING && user.current_draws.length >= consts.MAX_PARTICIPATIONS){
+            Alert.alert(
+              'Epaa',
+              'Ya estás participando de '+ consts.MAX_PARTICIPATIONS +' sorteos. Si querés, podés desinscribirte de otros para participar en este.',
+              [
+                  {text: 'Entendido', style: 'cancel'},
+              ],
+              {cancelable: true},
+            );
+            return;
+        }
         switch (buttonState) {
             case PARTICIPATE:
                 setButtonState(LOADING);
-                user.participate(draw.id)
+                user.participate(draw._id)
                   .then(() => setButtonState(PARTICIPATING))
                   .catch(console.error);
                 break;
@@ -56,9 +84,9 @@ export default function ParticipateButton({isUserParticipating, draw}) {
                 break;
             case PARTICIPATING:
                 setButtonState(LOADING);
-                user.stopParticipating(draw.id)
+                user.stopParticipating(draw._id)
                   .then(() => setButtonState(PARTICIPATE))
-                  .catch(console.error);
+                  .catch(e => console.error(e));
                 break;
         }
     };

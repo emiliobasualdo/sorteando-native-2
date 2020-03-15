@@ -66,7 +66,7 @@ export default function SmsButton() {
     };
 
     let input = <PhoneInput onValidNumber={onValidNumber} onInvalidNumber={onInvalidNumber} initialNumber={phoneNumber} style={styles.PhoneInput}/>;
-    let text = "Ingresá tu número de teléfono para recibir el código de activación.";
+    let text = "Ingresá tu número de teléfono para recibir el código de activación e inciar sesión.";
     if(smsState.type === PHONE) {
         input = <PhoneInput onValidNumber={onValidNumber} onInvalidNumber={onInvalidNumber} initialNumber={phoneNumber} style={styles.PhoneInput}/>
     } else if(smsState.type === CODE) {

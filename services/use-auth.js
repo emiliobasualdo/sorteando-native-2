@@ -5,7 +5,7 @@ import {
     verifyCode as _verifyCode,
     signout as _signout,
 } from "./auth";
-import {User} from "./users";
+import {User} from "./user";
 import {Text} from "react-native";
 
 // https://kentcdodds.com/blog/authentication-in-react-applications
@@ -22,7 +22,7 @@ export function UserProvider(props) {
         .then(user => setUser(user));
 
     useEffect(() => {
-        console.log("user set to:", user);
+        //console.log("user set to:", user);
     }, [user]);
     
     useEffect(() => {

@@ -8,10 +8,10 @@ import {useAuth} from "../services/use-auth";
 import {getDraw} from "../services/draw";
 import {Ionicons} from "@expo/vector-icons";
 
-export default function UserProfileView({navigation}) {
+export default function UserProfileView({navigation, route}) {
     const {user, signout} = useAuth();
     const [draws, setDraws] = useState([]);
-
+    
     const onSignOut = () => {
         Alert.alert(
           'Cerrar sesión',
@@ -49,7 +49,7 @@ export default function UserProfileView({navigation}) {
                   <View style={{flex:1}}>
                       {draws.length?
                         <ScrollView style={{flex:1}}>
-                            {draws.sort((a,b) => a.endDate-b.endDate).map((draw, index) => <BigDrawCard onPress={() => onDrawPress(draw)} key={index} draw={draw}/>)}
+                            {draws.map((draw, index) => <BigDrawCard onPress={() => onDrawPress(draw)} key={index} draw={draw}/>)}
                         </ScrollView>
                         :
                         <Text>Loading...</Text>

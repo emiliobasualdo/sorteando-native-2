@@ -3,7 +3,6 @@ import { Text, StyleSheet, TouchableOpacity, View, Image, ActivityIndicator } fr
 import Colors from "../constants/Colors";
 import { MARGIN } from "../constants/Layout";
 import MyCountDown from "../components/MyCountDown";
-import { getWinner } from "../services/draw";
 import { doAtOrAfter } from "../utils";
 
 // asumo que no terminó
@@ -11,20 +10,16 @@ import { doAtOrAfter } from "../utils";
 const [ NONE, LOADING] = [ "", "LOADING"];
 const OPACITY = .6;
 
-export default function SmallDrawCard(props) {
-    const { draw, onPress } = props;
-    const [ winner, setWinner ] = useState(draw.winner? draw.winner : NONE);
-
+export default function SmallDrawCard({ draw, onPress, getWinner }) {
+    const [ winner, setWinner ] = useState(draw.winner? draw.winner.phone_number : NONE);
+    
     const onFinish = () => {
         // si ya habíamos cargado el ganador. no lo busco de nuevo
         if(winner === NONE ) {
             // busca el ganador, espera por lo menos 3 segundos antes de sacar el spinner
             const doAt = Date.now() + (3 * 1000); // dentro de 3 segundos
-            getWinner(draw.id)
-                .then(r => {
-                    draw.winner = r;
-                    doAtOrAfter(doAt, () => setWinner(r));
-                });
+            getWinner(draw._id)
+                .then(w => doAtOrAfter(doAt, () => setWinner(w.phone_number)));
             // cambia de estado para que se muestre la ventana naranja y el spinner
             setWinner(LOADING);
         }
@@ -35,9 +30,9 @@ export default function SmallDrawCard(props) {
             <Image source={{uri: draw.images[0]}} style={styles.DrawImage}/>
             <View style={styles.InfoContainer}>
                 <View style={styles.TextContainer}>
-                    <Text style={styles.BrandText}>{draw.brand}</Text>
+                    <Text style={styles.BrandText}>{draw.brand.name}</Text>
                     <Text style={styles.TitleText}>{draw.title}</Text>
-                    <MyCountDown until={draw.endDate} onFinish={onFinish}/>
+                    <MyCountDown until={draw.end_date} onFinish={onFinish}/>
                 </View>
             </View>
             {winner !== NONE &&

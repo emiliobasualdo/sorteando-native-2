@@ -6,7 +6,7 @@ import {
   View,
   Image,
   TouchableOpacity,
-  Button
+  Button, Alert
 } from 'react-native';
 import Carousel from 'react-native-banner-carousel';
 import TextForEmptySituations from './../components/TextForEmptySituations';
@@ -22,10 +22,12 @@ import { doAtOrAfter } from "../utils";
 import {MaterialIcons} from "@expo/vector-icons";
 import HeaderSorteandoLogo from "../components/HeaderSorteandoLogo";
 import {useAuth} from "../services/use-auth";
+import {getWinner as _getWinner} from "../services/draw";
 
 const BannerHeight = ScreenHeight * 0.3;
 
 const separateDraws = (drawArr) => {
+  // separamos los draws en dos columnas
   const left = [], right = [];
   let count = 0;
   // no está tan bueno porque pierde le orden con el que vienen
@@ -38,8 +40,9 @@ let onResetPress = () => {};
 let onResetDelete = () => {};
 export default function DrawsScreen({navigation}) {
   const [ banners, setBanners ] = useState([]);
-  const [ feed, setFeed ] = useState({draws: [], count: 0});
+  const [ feed, setFeed ] = useState([]);
   const [ refreshing, setRefreshing ] = useState(false);
+  const {user} = useAuth();
   const {verifyCode, signout} = useAuth();
   onResetDelete = () => {
     signout();
@@ -60,11 +63,11 @@ export default function DrawsScreen({navigation}) {
   }, []);
 
   const onDrawPress = (draw) => {
-    if(draw.endDate >= Date.now()/1000) {
+    if(draw.end_date >= Date.now()) {
       const {navigate} = navigation;
       navigate("Draw", {draw});
     } else {
-      setFeed({...feed, count: feed.count-1, draws: feed.draws.filter(d => d.id !== draw.id)})
+      setFeed(feed.filter(d => d._id !== draw._id));
     }
   };
 
@@ -79,8 +82,24 @@ export default function DrawsScreen({navigation}) {
       });
     }
   }, [refreshing]);
-
-  const [ leftDraws, rightDraws ] = separateDraws(feed.draws);
+  
+  const getWinner = (drawId) =>
+    _getWinner(drawId)
+      .then(w => {
+        if (user && w._id === user._id) {
+          Alert.alert(
+            'Ganaste',
+            '¡¡Felicitaciones ganaste el sorteo!!\n Nos pondremos en contacto con vos para organizar la entrega.\nTe dijimos que ganar nunca fue ta fácil! ',
+            [
+              {text: 'Ver sorteo', onPress: () => navigation.navigate("Draw", {drawId}) , style: 'cancel'},
+            ],
+            {cancelable: true},
+          );
+        }
+        return w;
+      });
+  
+  const [ leftDraws, rightDraws ] = separateDraws(feed);
   return (
     <View style={styles.MainContainer}>
       <View style={styles.ScrollContainer}>
@@ -98,23 +117,23 @@ export default function DrawsScreen({navigation}) {
               index={0}
               pageSize={ScreeWidth}
             >
-              {banners.map((image, index) =>
-                <View key={index}>
-                  <Image style={styles.BannerImage} source={{uri: image}}/>
+              {banners.map((banner) =>
+                <View key={banner._id}>
+                  <Image style={styles.BannerImage} source={{uri: banner.image}}/>
                 </View>
               )}
             </Carousel>
           </View>
           <View>
-            {feed.count?
+            {feed.length?
               (
                 <View style={{flex:1, flexDirection: "row"}}>
                   <View style={styles.CardsColumnsLeft}>
-                    {rightDraws.map(draw => <SmallDrawCard onPress={() => onDrawPress(draw)} key={draw.id} draw={draw}/>)}
+                    {rightDraws.map(draw => <SmallDrawCard getWinner={getWinner} onPress={() => onDrawPress(draw)} key={draw._id} draw={draw}/>)}
                   </View>
                   <View style={{marginHorizontal: MARGIN/2}}/>
                   <View style={styles.CardsColumnsRight}>
-                    {leftDraws.map(draw => <SmallDrawCard onPress={() => onDrawPress(draw)} key={draw.id} draw={draw}/>)}
+                    {leftDraws.map(draw => <SmallDrawCard getWinner={getWinner} onPress={() => onDrawPress(draw)} key={draw._id} draw={draw}/>)}
                   </View>
                 </View>
               )

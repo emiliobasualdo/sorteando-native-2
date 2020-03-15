@@ -3,11 +3,12 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import Colors from "../constants/Colors";
 
-const DAYS = 24*60*60;
-export default function Divider({ until, onFinish }) {
-    const now = Date.now() / 1000;
+const DAYS = 24*60*60*1000;
+export default function MyCountDown({ until, onFinish }) {
+    const now = Date.now();
+    until = until.getTime();
     let timeToShow, timeLabels;
-    if ((until - now) > (DAYS)) {
+    if ((until - now) > DAYS) {
         timeToShow = ['D', 'H', 'm'];
         timeLabels = {d: 'D', h: 'H', m: 'm'};
     } else {
@@ -16,7 +17,7 @@ export default function Divider({ until, onFinish }) {
     }
     return (
         <CountDown
-            until={until-now}
+            until={(until-now)/1000}
             digitStyle={styles.CountDownDigits}
             digitTxtStyle={styles.CountDownDigitsTxt}
             timeToShow={timeToShow}

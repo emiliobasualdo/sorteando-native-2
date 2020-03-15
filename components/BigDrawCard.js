@@ -7,28 +7,28 @@ import {getDraw} from "../services/draw";
 
 const OPACITY = 0.6;
 export default function BigDrawCard({ draw, onPress }) {
-    const now = Date.now() / 1000;
-    const [finished, setFinished] = useState(draw.endDate <= now);
+    const now = Date.now();
+    const [finished, setFinished] = useState(draw.end_date <= now);
     const [_draw, setDraw] = useState(draw);
     const onFinish = () => {
         setFinished(true);
-        getDraw(_draw.id).then(draw => setDraw(draw))
+        getDraw(_draw._id).then(draw => setDraw(draw))
     };
     return(
         <TouchableOpacity activeOpacity={OPACITY} disabled={finished} onPress={onPress} style={styles.DrawContainer} >
             <Image source={{uri: _draw.images[0]}} style={styles.DrawImage}/>
             <View style={styles.InfoContainer}>
                 <View style={styles.TextContainer}>
-                    <Text style={styles.BrandText}>{_draw.brand}</Text>
+                    <Text style={styles.BrandText}>{_draw.brand.name}</Text>
                     <Text style={styles.TitleText}>{_draw.title}</Text>
                 </View>
                 <View style={styles.CountDownContainer}>
                     {finished?
                         <View style={styles.WinnerContainer}>
-                            <Text style={styles.WinnerName}>{_draw.winner}</Text>
+                            <Text style={styles.WinnerName}>{_draw.winner.phone_number}</Text>
                         </View>
                         :
-                        <MyCountDown until={_draw.endDate} onFinish={onFinish}/>
+                        <MyCountDown until={_draw.end_date} onFinish={onFinish}/>
                     }
                 </View>
             </View>

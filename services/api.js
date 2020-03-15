@@ -25,7 +25,7 @@ export const _post = (endpoint, { query="", body } = {}) => {
     return _axios.post(`${endpoint}${query}`, body).then(r=> r.data);
 };
 
-export const _delete = (endpoint, { query } = {}) => {
+export const _delete = (endpoint, { query="" } = {}) => {
     query = query? "?"+query : "";
     console.log(`DELETE: ${endpoint}${query}`);
     return _axios.delete(`${endpoint}${query}`).then(r=> r.data);
