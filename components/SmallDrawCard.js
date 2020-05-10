@@ -12,7 +12,6 @@ const OPACITY = .6;
 
 export default function SmallDrawCard({ draw, onPress, getWinner }) {
     const [ winner, setWinner ] = useState(draw.winner? draw.winner.phone_number : NONE);
-    
     const onFinish = () => {
         // si ya habíamos cargado el ganador. no lo busco de nuevo
         if(winner === NONE ) {

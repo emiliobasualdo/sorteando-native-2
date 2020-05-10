@@ -16,9 +16,9 @@ import {
   ScreeWidth,
   MARGIN, HEAD_ICON_SIZE, HEAD_ICON_SIDE_MARGIN, HEAD_ICON_TOP_MARGIN
 } from "../constants/Layout";
-import { getFeed, getBanners} from './../services/feed'
+import {getFeed, getBanners} from './../services/feed'
 import Colors from "../constants/Colors";
-import { doAtOrAfter } from "../utils";
+import {doAtOrAfter} from "../utils";
 import {MaterialIcons} from "@expo/vector-icons";
 import HeaderSorteandoLogo from "../components/HeaderSorteandoLogo";
 import {useAuth} from "../services/use-auth";
@@ -27,6 +27,7 @@ import {getWinner as _getWinner} from "../services/draw";
 const BannerHeight = ScreenHeight * 0.3;
 
 const separateDraws = (drawArr) => {
+  console.log(new Date());
   // separamos los draws en dos columnas
   const left = [], right = [];
   let count = 0;
@@ -38,10 +39,19 @@ const separateDraws = (drawArr) => {
 };
 let onResetPress = () => {};
 let onResetDelete = () => {};
+
+function getRandomArbitrary(min, max) {
+  return Math.trunc(Math.random() * (max - min) + min);
+}
+const getDate = () => {
+  return new Date(Date.now() + getRandomArbitrary(5 *1000, 10 *1000));
+};
+
+
 export default function DrawsScreen({navigation}) {
-  const [ banners, setBanners ] = useState([]);
-  const [ feed, setFeed ] = useState([]);
-  const [ refreshing, setRefreshing ] = useState(false);
+  const [banners, setBanners] = useState([]);
+  const [feed, setFeed] = useState([]);
+  const [refreshing, setRefreshing] = useState(false);
   const {user} = useAuth();
   const {verifyCode, signout} = useAuth();
   onResetDelete = () => {
@@ -51,35 +61,45 @@ export default function DrawsScreen({navigation}) {
     signout();
     verifyCode("+5491111111111", "11");
   };
-
+  
+  const _getFeed = (andThen=()=>{}) => {
+    getFeed()
+      .then(r => {
+        // información falsa
+        r = r.map( d => {
+          d.end_date = getDate();
+          return d;
+        });
+        // filtramos los draws que hayan terminado
+        r = r.filter(d => d.end_date >= Date.now());
+        setFeed(r);
+        andThen()
+      });
+  };
+  
   useEffect(() => {
     const {left, center} = drawsHeader(navigation);
     navigation.setOptions({
       headerLeft: left,
       headerTitle: center,
     });
-    getFeed().then(r => setFeed(r));
-    getBanners().then(r => setBanners(r) );
+    _getFeed();
+    getBanners().then(r => setBanners(r));
   }, []);
-
+  
   const onDrawPress = (draw) => {
-    if(draw.end_date >= Date.now()) {
+    if (draw.end_date >= Date.now()) {
       const {navigate} = navigation;
       navigate("Draw", {draw});
-    } else {
+    } /*else {
       setFeed(feed.filter(d => d._id !== draw._id));
-    }
+    }*/
   };
-
+  
   useEffect(() => {
     if (refreshing) {
-      const doAT = Date.now() + 1500;
-      getFeed().then(r => {
-        doAtOrAfter(doAT, () => {
-          setFeed(r);
-          setRefreshing(false);
-        });
-      });
+      const andThen = () => setRefreshing(false);
+      _getFeed(andThen);
     }
   }, [refreshing]);
   
@@ -88,10 +108,10 @@ export default function DrawsScreen({navigation}) {
       .then(w => {
         if (user && w._id === user._id) {
           Alert.alert(
-            'Ganaste',
-            '¡¡Felicitaciones ganaste el sorteo!!\n Nos pondremos en contacto con vos para organizar la entrega.\nTe dijimos que ganar nunca fue ta fácil! ',
+            '¡Ganaste!',
+            '¡Felicitaciones ganaste el sorteo!\n Nos pondremos en contacto con vos para coordinar la entrega.\nTe dijimos que ganar nunca fue tan fácil! ',
             [
-              {text: 'Ver sorteo', onPress: () => navigation.navigate("Draw", {drawId}) , style: 'cancel'},
+              {text: 'Ver sorteo', onPress: () => navigation.navigate("Draw", {drawId}), style: 'cancel'},
             ],
             {cancelable: true},
           );
@@ -99,16 +119,15 @@ export default function DrawsScreen({navigation}) {
         return w;
       });
   
-  const [ leftDraws, rightDraws ] = separateDraws(feed);
+  const [leftDraws, rightDraws] = separateDraws(feed);
   return (
     <View style={styles.MainContainer}>
       <View style={styles.ScrollContainer}>
-        <ScrollView
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(true)} />}>
-          {__DEV__ && <View style={{flexDirection:"row"}}>
+        <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => setRefreshing(true)}/>}>
+          {/*{__DEV__ && <View style={{flexDirection: "row"}}>
             <Button title={"JWT Reset"} onPress={onResetPress}/>
             <Button title={"JWT Delete"} onPress={onResetDelete}/>
-          </View>}
+          </View>}*/}
           <View style={styles.BannerContainer}>
             <Carousel
               autoplay
@@ -125,15 +144,17 @@ export default function DrawsScreen({navigation}) {
             </Carousel>
           </View>
           <View>
-            {feed.length?
+            {feed.length ?
               (
-                <View style={{flex:1, flexDirection: "row"}}>
+                <View style={{flex: 1, flexDirection: "row"}}>
                   <View style={styles.CardsColumnsLeft}>
-                    {rightDraws.map(draw => <SmallDrawCard getWinner={getWinner} onPress={() => onDrawPress(draw)} key={draw._id} draw={draw}/>)}
+                    {rightDraws.map(draw => <SmallDrawCard getWinner={getWinner} onPress={() => onDrawPress(draw)}
+                                                           key={draw._id + Date.now()} draw={draw}/>)}
                   </View>
-                  <View style={{marginHorizontal: MARGIN/2}}/>
+                  <View style={{marginHorizontal: MARGIN / 2}}/>
                   <View style={styles.CardsColumnsRight}>
-                    {leftDraws.map(draw => <SmallDrawCard getWinner={getWinner} onPress={() => onDrawPress(draw)} key={draw._id} draw={draw}/>)}
+                    {leftDraws.map(draw => <SmallDrawCard getWinner={getWinner} onPress={() => onDrawPress(draw)}
+                                                          key={draw._id + Date.now()} draw={draw}/>)}
                   </View>
                 </View>
               )
@@ -163,7 +184,7 @@ const drawsHeader = (navigation) => ({
 
 const styles = StyleSheet.create({
   MainContainer: {
-    flex:1,
+    flex: 1,
     flexDirection: 'column',
     backgroundColor: Colors.backgroundColor,
   },
@@ -178,7 +199,7 @@ const styles = StyleSheet.create({
     height: BannerHeight,
     width: '100%',
   },
-  BannerImage : {
+  BannerImage: {
     width: ScreeWidth,
     height: BannerHeight,
     backgroundColor: Colors.backgroundColor
@@ -204,12 +225,12 @@ const styles = StyleSheet.create({
   TextForEmptySituations: {
     marginTop: 100,
   },
-  SorteandoLogo:{
+  SorteandoLogo: {
     height: 40,
     resizeMode: 'contain'
   },
   LeftIconContainer: {
     marginLeft: HEAD_ICON_SIDE_MARGIN,
-    alignSelf:'center',
+    alignSelf: 'center',
   },
 });

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, StyleSheet, View, Text, Image} from 'react-native';
+import {ScrollView, StyleSheet, View, Text, Image, Button} from 'react-native';
 import {
   MARGIN,
   ScreeWidth,
@@ -12,7 +12,6 @@ import ParticipateButton from "../components/ParticipateButton";
 import HeaderSorteandoLogo from "../components/HeaderSorteandoLogo";
 import {useAuth} from "../services/use-auth";
 import {getDraw} from "../services/draw";
-import Confetti from 'react-confetti'
 
 const BannerHeight = ScreenHeight * 0.4;
 
@@ -21,10 +20,13 @@ export default function DrawScreen({navigation, route}) {
   const {user} = useAuth();
   const now = Date.now();
   const [draw, setDraw] = useState(_draw);
-  const [finished, setFinished] = useState(draw.end_date <= now);
-  const [participating, setParticipating] = useState(user && user.current_draws.includes(draw._id));
+  const [finished, setFinished] = useState(draw? draw.end_date <= now: false);
+  const [participating, setParticipating] = useState(user && user.current_draws.includes(draw? draw._id: drawId));
   
-  const onFinish = () => setFinished(true);
+  const onFinish = () => {
+    getDraw(draw._id)
+      .then(d => setDraw(d));
+  };
   
   useEffect(() => {
     if (!draw) {
@@ -34,15 +36,15 @@ export default function DrawScreen({navigation, route}) {
     navigation.setOptions({
       headerTitle: <HeaderSorteandoLogo/>,
       headerBackTitleVisible: false
-    })
+    });
   }, []);
   useEffect( () => {
-    setParticipating(user && user.current_draws.includes(draw._id));
-  }, [user.current_draws]);
+    setParticipating(user && user.current_draws.includes(draw? draw._id: drawId));
+  }, [user && user.current_draws]);
+  
   
   return (
     <View style={styles.MainContainer}>
-      {user && draw && draw.winner && draw.winner._id === user._id && <Confetti width={ScreeWidth} height={ScreenHeight} />}
       <View style={styles.ScrollContainer}>
         {draw && <ScrollView>
           <View style={styles.BannerContainer}>
